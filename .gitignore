@@ -2,3 +2,20 @@ node_modules/
 dist/
 coverage/
 .env
+# Python venv
+.venv/
+
+# Local Jenkins runtime and Java
+jenkins_home/
+jenkins.war
+jdk17/
+jdk17.zip
+
+# Test output
+test-results/
+coverage.xml
+
+# OS/editor noise
+*.log
+Thumbs.db
+.DS_Store

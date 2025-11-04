@@ -1,21 +1,85 @@
 pipeline {
   agent any
-  tools { nodejs 'Node18' }
   options { timestamps(); ansiColor('xterm') }
+
   stages {
-    stage('Checkout') { steps { checkout scm } }
-    stage('Install')  { steps { bat 'npm ci' } }
+    stage('Checkout SCM') {
+      steps { checkout scm }
+    }
+
+    stage('Setup') {
+      steps {
+        bat label: 'Create venv + install deps', script: '''
+        where py || ver >NUL
+        if not exist .venv (
+          py -3 -m venv .venv || python -m venv .venv
+        )
+        call .venv\Scripts\activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        '''
+      }
+    }
+
+    stage('Lint') {
+      steps {
+        bat '''
+        call .venv\Scripts\activate
+        flake8 .
+        '''
+      }
+    }
+
     stage('Test') {
-      steps { bat 'npm test -- --ci' }
+      steps {
+        bat '''
+        call .venv\Scripts\activate
+        pytest --junitxml=test-results\junit.xml
+        '''
+      }
       post {
         always {
           junit allowEmptyResults: true, testResults: 'test-results/*.xml'
         }
       }
     }
-    stage('Build')    { steps { bat 'npm run build' } }
-    stage('Archive')  { steps { archiveArtifacts artifacts: 'dist/**/*', fingerprint: true } }
+
+    stage('Coverage') {
+      steps {
+        bat '''
+        call .venv\Scripts\activate
+        coverage run -m pytest
+        coverage report -m
+        coverage xml -o coverage.xml
+        '''
+      }
+    }
+
+    stage('Security Scan') {
+      steps {
+        bat '''
+        call .venv\Scripts\activate
+        bandit -r . -f txt -o bandit.txt
+        '''
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        bat '''
+        call .venv\Scripts\activate
+        python app\main.py
+        '''
+      }
+    }
+
+    stage('Archive') {
+      steps {
+        archiveArtifacts artifacts: 'dist/**/*, coverage.xml, bandit.txt', fingerprint: true
+      }
+    }
   }
+
   post {
     always { echo "Build finished: ${currentBuild.currentResult}" }
   }
