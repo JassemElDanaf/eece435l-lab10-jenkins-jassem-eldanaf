@@ -5,7 +5,14 @@ pipeline {
   stages {
     stage('Checkout') { steps { checkout scm } }
     stage('Install')  { steps { bat 'npm ci' } }
-    stage('Test')     { steps { bat 'npm test -- --ci' } }
+    stage('Test') {
+      steps { bat 'npm test -- --ci' }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'test-results/*.xml'
+        }
+      }
+    }
     stage('Build')    { steps { bat 'npm run build' } }
     stage('Archive')  { steps { archiveArtifacts artifacts: 'dist/**/*', fingerprint: true } }
   }
