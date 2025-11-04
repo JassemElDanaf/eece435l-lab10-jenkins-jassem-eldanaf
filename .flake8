@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203,W391
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    dist,
+    build,
+    jenkins_home,
+    jdk17,
+    node_modules,
+    .pytest_cache,
+    coverage_html,
+    jenkins.war
