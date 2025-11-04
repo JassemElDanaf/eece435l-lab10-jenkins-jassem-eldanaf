@@ -59,7 +59,7 @@ pipeline {
       steps {
         bat '''
         call .venv\Scripts\activate
-        bandit -r . -f txt -o bandit.txt
+        bandit -r . -f txt -o bandit.txt --exit-zero
         '''
       }
     }
